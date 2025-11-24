@@ -426,6 +426,21 @@
             livesElement.textContent = '3';
             plane.textContent = '✈️';
 
+            // UNLOCK AUDIO on iOS with a dummy sound
+            try {
+                const unlockAudio = new (window.AudioContext || window.webkitAudioContext)();
+                const unlockOsc = unlockAudio.createOscillator();
+                const unlockGain = unlockAudio.createGain();
+                unlockOsc.connect(unlockGain);
+                unlockGain.connect(unlockAudio.destination);
+                unlockGain.gain.setValueAtTime(0.001, unlockAudio.currentTime); // Almost silent
+                unlockOsc.start();
+                unlockOsc.stop(unlockAudio.currentTime + 0.01);
+                console.log('✅ Audio unlocked!');
+            } catch(e) {
+                console.log('Audio unlock failed:', e);
+            }
+
             setInterval(() => { if (gameRunning) createObstacle(); }, 2000);
             setInterval(() => { if (gameRunning) createStar(); }, 1500);
 
