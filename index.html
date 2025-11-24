@@ -619,47 +619,61 @@
         }
 
         function startBackgroundMusic() {
-            if (!sharedAudioContext || musicInterval) return;
+            if (!sharedAudioContext) {
+                console.log('❌ No audio context for music!');
+                return;
+            }
+            if (musicInterval) {
+                console.log('⚠️ Music already playing');
+                return;
+            }
 
-            const melody = [523, 587, 659, 587, 523, 440, 523, 587];  // C D E D C A C D
-            const bass = [262, 330, 392, 330, 262, 220, 262, 330];     // Bass notes
+            console.log('🎵 Starting music, audio state:', sharedAudioContext.state);
+
+            const melody = [523, 587, 659, 587, 523, 440, 523, 587];
+            const bass = [262, 330, 392, 330, 262, 220, 262, 330];
             let noteIndex = 0;
 
             musicInterval = setInterval(() => {
                 if (!gameRunning) return;
 
                 try {
-                    // Lead melody
+                    // Lead melody - LOUDER
                     const lead = sharedAudioContext.createOscillator();
                     const leadGain = sharedAudioContext.createGain();
                     lead.connect(leadGain);
                     leadGain.connect(sharedAudioContext.destination);
                     lead.frequency.value = melody[noteIndex % melody.length];
                     lead.type = 'square';
-                    leadGain.gain.setValueAtTime(0.08, sharedAudioContext.currentTime);
+                    leadGain.gain.setValueAtTime(0.15, sharedAudioContext.currentTime); // Louder!
                     leadGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.3);
                     lead.start();
                     lead.stop(sharedAudioContext.currentTime + 0.3);
 
-                    // Bass
+                    // Bass - LOUDER
                     const bassOsc = sharedAudioContext.createOscillator();
                     const bassGain = sharedAudioContext.createGain();
                     bassOsc.connect(bassGain);
                     bassGain.connect(sharedAudioContext.destination);
                     bassOsc.frequency.value = bass[noteIndex % bass.length];
                     bassOsc.type = 'sine';
-                    bassGain.gain.setValueAtTime(0.06, sharedAudioContext.currentTime);
+                    bassGain.gain.setValueAtTime(0.12, sharedAudioContext.currentTime); // Louder!
                     bassGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.3);
                     bassOsc.start();
                     bassOsc.stop(sharedAudioContext.currentTime + 0.3);
 
                     noteIndex++;
+
+                    // Log first note to confirm it's playing
+                    if (noteIndex === 1) {
+                        console.log('♪ First music note played!');
+                    }
                 } catch(e) {
                     console.log('Music error:', e);
                 }
-            }, 350); // Play note every 350ms
+            }, 350);
 
-            console.log('🎵 Background music started!');
+            console.log('✅ Music interval started!');
         }
 
         function stopBackgroundMusic() {
