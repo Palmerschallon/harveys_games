@@ -228,7 +228,9 @@
         <p>TAP ANYWHERE TO FART!</p>
         <p>Avoid bad guys 🚁</p>
         <p>Collect stars ⭐</p>
-        <button class="bigButton" onclick="startGame()">TAP TO PLAY!</button>
+        <p>Collect tacos 🌮 for FART TORNADO!</p>
+        <button class="bigButton" id="soundButton" onclick="enableSound()" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">🔊 TURN ON SOUND!</button>
+        <button class="bigButton" id="playButton" onclick="startGame()" style="display:none;">TAP TO PLAY!</button>
     </div>
 
     <div id="gameContainer">
@@ -667,36 +669,49 @@
             }
         }
 
-        function startGame() {
-            // UNLOCK AUDIO FIRST - must be synchronous with user tap on iOS!
+        function enableSound() {
+            // Create audio context and play test sound
             try {
                 if (!sharedAudioContext) {
                     sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    console.log('✅ Audio context created!', sharedAudioContext.state);
                 }
 
-                // Play LOUDER AUDIBLE test tone IMMEDIATELY (before anything else!)
+                // Play a LOUD test beep
                 const testOsc = sharedAudioContext.createOscillator();
                 const testGain = sharedAudioContext.createGain();
                 testOsc.connect(testGain);
                 testGain.connect(sharedAudioContext.destination);
                 testOsc.frequency.value = 800;
                 testOsc.type = 'sine';
-                testGain.gain.setValueAtTime(0.5, sharedAudioContext.currentTime); // VERY LOUD!
+                testGain.gain.setValueAtTime(0.5, sharedAudioContext.currentTime);
                 testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.3);
-                testOsc.start(sharedAudioContext.currentTime);
+                testOsc.start();
                 testOsc.stop(sharedAudioContext.currentTime + 0.3);
-                console.log('✅ Test beep STARTED, state:', sharedAudioContext.state);
 
-                // Wait a moment for audio to truly start, then check state
-                setTimeout(() => {
-                    console.log('Audio context state after beep:', sharedAudioContext.state);
-                }, 100);
+                // Say "Sound On!"
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("Sound on!");
+                    utterance.volume = 1.0;
+                    utterance.rate = 1.0;
+                    speechSynthesis.speak(utterance);
+                }
+
+                console.log('✅ Sound enabled! Audio state:', sharedAudioContext.state);
+
+                // Hide sound button, show play button
+                document.getElementById('soundButton').style.display = 'none';
+                document.getElementById('playButton').style.display = 'block';
             } catch(e) {
-                console.log('❌ Audio unlock failed:', e);
+                console.log('❌ Sound enable failed:', e);
+                alert('Sound failed to enable. Try again!');
             }
+        }
 
-            // Now start the game
+        function startGame() {
+            // Audio should already be enabled from the sound button
+            console.log('Starting game, audio state:', sharedAudioContext ? sharedAudioContext.state : 'no context');
+
+            // Start the game
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             gameOver.style.display = 'none';
