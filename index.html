@@ -724,6 +724,7 @@
         }
 
         function startGame() {
+            console.log('🎮 startGame() called');
             // Audio should already be enabled from the sound button
             console.log('Starting game, audio state:', sharedAudioContext ? sharedAudioContext.state : 'no context');
 
@@ -739,19 +740,25 @@
             obstacles = [];
             stars = [];
 
-            // Start the game
-            startScreen.style.display = 'none';
-            gameContainer.style.display = 'block';
-            gameOver.style.display = 'none';
+            // Reset game state
             gameRunning = true;
             score = 0;
             lives = 3;
             planeY = window.innerHeight / 2;
             velocity = 0;
             totalFarts = 0;
+
+            // Update UI
             scoreElement.textContent = '0';
             livesElement.textContent = '3';
             plane.textContent = '✈️';
+
+            // Show/hide screens
+            startScreen.style.display = 'none';
+            gameOver.style.display = 'none';
+            gameContainer.style.display = 'block';
+
+            console.log('✅ Game screens updated');
 
             obstacleInterval = setInterval(() => { if (gameRunning) createObstacle(); }, 2500);
             starInterval = setInterval(() => { if (gameRunning) createStar(); }, 1000);
@@ -768,6 +775,7 @@
         }
 
         function restartGame() {
+            console.log('🔄 restartGame() called');
             startGame();
         }
     </script>
