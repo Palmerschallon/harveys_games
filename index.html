@@ -307,7 +307,7 @@
 
             // Play fart sound using SHARED audio context
             try {
-                if (sharedAudioContext && sharedAudioContext.state === 'running') {
+                if (sharedAudioContext) {
                     const osc = sharedAudioContext.createOscillator();
                     const gain = sharedAudioContext.createGain();
                     osc.connect(gain);
@@ -319,8 +319,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.2);
                     osc.start();
                     osc.stop(sharedAudioContext.currentTime + 0.2);
-                } else {
-                    console.log('⚠️ Audio context not ready for fart sound');
                 }
             } catch(e) {
                 console.log('Fart sound failed:', e);
@@ -677,34 +675,23 @@
                     console.log('✅ Audio context created!', sharedAudioContext.state);
                 }
 
-                // CRITICAL: Resume BEFORE playing sound
-                if (sharedAudioContext.state === 'suspended') {
-                    sharedAudioContext.resume().then(() => {
-                        console.log('✅ Audio context resumed!', sharedAudioContext.state);
-                    });
-                }
-
-                // Play LOUDER AUDIBLE test tone (iOS Safari requires this)
+                // Play LOUDER AUDIBLE test tone IMMEDIATELY (before anything else!)
                 const testOsc = sharedAudioContext.createOscillator();
                 const testGain = sharedAudioContext.createGain();
                 testOsc.connect(testGain);
                 testGain.connect(sharedAudioContext.destination);
                 testOsc.frequency.value = 800;
-                testOsc.type = 'sine'; // Cleaner sound
-                testGain.gain.setValueAtTime(0.3, sharedAudioContext.currentTime); // LOUDER!
-                testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.2);
+                testOsc.type = 'sine';
+                testGain.gain.setValueAtTime(0.5, sharedAudioContext.currentTime); // VERY LOUD!
+                testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.3);
                 testOsc.start(sharedAudioContext.currentTime);
-                testOsc.stop(sharedAudioContext.currentTime + 0.2);
-                console.log('✅ Test beep played at volume 0.3!');
+                testOsc.stop(sharedAudioContext.currentTime + 0.3);
+                console.log('✅ Test beep STARTED, state:', sharedAudioContext.state);
 
-                // Also try TTS unlock
-                if ('speechSynthesis' in window) {
-                    const unlockUtterance = new SpeechSynthesisUtterance("Ready!");
-                    unlockUtterance.volume = 0.1; // Quiet
-                    unlockUtterance.rate = 2.0; // Fast
-                    speechSynthesis.speak(unlockUtterance);
-                    console.log('✅ TTS unlock attempted');
-                }
+                // Wait a moment for audio to truly start, then check state
+                setTimeout(() => {
+                    console.log('Audio context state after beep:', sharedAudioContext.state);
+                }, 100);
             } catch(e) {
                 console.log('❌ Audio unlock failed:', e);
             }
@@ -723,25 +710,18 @@
             livesElement.textContent = '3';
             plane.textContent = '✈️';
 
-            setInterval(() => { if (gameRunning) createObstacle(); }, 2500); // Every 2.5 seconds
-            setInterval(() => { if (gameRunning) createStar(); }, 1000); // Every 1 second - MORE STARS!
+            setInterval(() => { if (gameRunning) createObstacle(); }, 2500);
+            setInterval(() => { if (gameRunning) createStar(); }, 1000);
 
             gameLoop = setInterval(update, 1000 / 60);
 
-            // Start background music AFTER ensuring audio context is running!
+            // Start background music after delay
             setTimeout(() => {
-                if (sharedAudioContext && sharedAudioContext.state === 'running') {
+                console.log('Attempting to start music, audio state:', sharedAudioContext ? sharedAudioContext.state : 'no context');
+                if (sharedAudioContext) {
                     startBackgroundMusic();
-                } else {
-                    console.log('⚠️ Audio context not running, trying to resume...');
-                    if (sharedAudioContext) {
-                        sharedAudioContext.resume().then(() => {
-                            console.log('✅ Resumed, starting music');
-                            startBackgroundMusic();
-                        });
-                    }
                 }
-            }, 500);
+            }, 600);
         }
 
         function restartGame() {
