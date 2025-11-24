@@ -456,12 +456,22 @@
                     // Random encouraging message every 5 stars
                     if (score % 50 === 0 && score > 0) {
                         try {
-                            const msg = funMessages[Math.floor(Math.random() * funMessages.length)];
-                            const utterance = new SpeechSynthesisUtterance(msg);
-                            utterance.rate = 1.0;
-                            utterance.volume = 1.0;
-                            speechSynthesis.speak(utterance);
-                        } catch(e) {}
+                            if ('speechSynthesis' in window) {
+                                speechSynthesis.cancel(); // Clear pending speech
+                                const msg = funMessages[Math.floor(Math.random() * funMessages.length)];
+                                const utterance = new SpeechSynthesisUtterance(msg);
+                                utterance.rate = 1.0;
+                                utterance.volume = 1.0;
+                                utterance.pitch = 1.2;
+                                utterance.lang = 'en-US';
+                                setTimeout(() => {
+                                    speechSynthesis.speak(utterance);
+                                }, 100);
+                                console.log('Encouraging:', msg);
+                            }
+                        } catch(e) {
+                            console.log('TTS encouraging error:', e);
+                        }
                     }
                 }
             });
@@ -516,11 +526,26 @@
 
             // Speak crash message
             try {
-                const utterance = new SpeechSynthesisUtterance(crashMessages[Math.floor(Math.random() * crashMessages.length)]);
-                utterance.rate = 0.9;
-                utterance.volume = 1.0;
-                speechSynthesis.speak(utterance);
-            } catch(e) {}
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel(); // Clear any pending speech
+                    const msg = crashMessages[Math.floor(Math.random() * crashMessages.length)];
+                    const utterance = new SpeechSynthesisUtterance(msg);
+                    utterance.rate = 0.8; // Slower for clarity
+                    utterance.volume = 1.0; // Max volume
+                    utterance.pitch = 1.2; // Higher pitch to stand out
+                    utterance.lang = 'en-US';
+
+                    // Wait a tiny bit then speak (helps on some browsers)
+                    setTimeout(() => {
+                        speechSynthesis.speak(utterance);
+                    }, 100);
+                    console.log('Speaking:', msg);
+                } else {
+                    console.log('speechSynthesis not available');
+                }
+            } catch(e) {
+                console.log('TTS error:', e);
+            }
 
             if (lives <= 0) {
                 endGame();
