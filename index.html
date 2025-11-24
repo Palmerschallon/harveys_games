@@ -23,6 +23,7 @@
         }
 
         body {
+            background-color: #1a2f4d; /* Solid fallback for Safari */
             background: linear-gradient(to bottom, #0a1e3d 0%, #1a2f4d 40%, #0f1922 100%);
             background-attachment: fixed;
             display: flex;
@@ -32,6 +33,8 @@
             -moz-background-size: cover;
             -o-background-size: cover;
             background-size: cover;
+            min-height: 100vh;
+            min-width: 100vw;
         }
 
         #startScreen {
@@ -669,22 +672,35 @@
                 if (!sharedAudioContext) {
                     sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
                     console.log('✅ Audio context created!', sharedAudioContext.state);
-
-                    // Play an AUDIBLE test tone immediately (iOS requires this)
-                    const testOsc = sharedAudioContext.createOscillator();
-                    const testGain = sharedAudioContext.createGain();
-                    testOsc.connect(testGain);
-                    testGain.connect(sharedAudioContext.destination);
-                    testOsc.frequency.value = 800;
-                    testGain.gain.setValueAtTime(0.1, sharedAudioContext.currentTime);
-                    testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.1);
-                    testOsc.start();
-                    testOsc.stop(sharedAudioContext.currentTime + 0.1);
-                    console.log('✅ Test beep played!');
                 }
-                // Resume if suspended (iOS requirement)
+
+                // CRITICAL: Resume BEFORE playing sound
                 if (sharedAudioContext.state === 'suspended') {
-                    sharedAudioContext.resume();
+                    sharedAudioContext.resume().then(() => {
+                        console.log('✅ Audio context resumed!', sharedAudioContext.state);
+                    });
+                }
+
+                // Play LOUDER AUDIBLE test tone (iOS Safari requires this)
+                const testOsc = sharedAudioContext.createOscillator();
+                const testGain = sharedAudioContext.createGain();
+                testOsc.connect(testGain);
+                testGain.connect(sharedAudioContext.destination);
+                testOsc.frequency.value = 800;
+                testOsc.type = 'sine'; // Cleaner sound
+                testGain.gain.setValueAtTime(0.3, sharedAudioContext.currentTime); // LOUDER!
+                testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.2);
+                testOsc.start(sharedAudioContext.currentTime);
+                testOsc.stop(sharedAudioContext.currentTime + 0.2);
+                console.log('✅ Test beep played at volume 0.3!');
+
+                // Also try TTS unlock
+                if ('speechSynthesis' in window) {
+                    const unlockUtterance = new SpeechSynthesisUtterance("Ready!");
+                    unlockUtterance.volume = 0.1; // Quiet
+                    unlockUtterance.rate = 2.0; // Fast
+                    speechSynthesis.speak(unlockUtterance);
+                    console.log('✅ TTS unlock attempted');
                 }
             } catch(e) {
                 console.log('❌ Audio unlock failed:', e);
