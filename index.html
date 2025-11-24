@@ -420,6 +420,33 @@
         }
 
         function startGame() {
+            // UNLOCK AUDIO FIRST - must be synchronous with user tap on iOS!
+            try {
+                if (!sharedAudioContext) {
+                    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('✅ Audio context created!', sharedAudioContext.state);
+
+                    // Play an AUDIBLE test tone immediately (iOS requires this)
+                    const testOsc = sharedAudioContext.createOscillator();
+                    const testGain = sharedAudioContext.createGain();
+                    testOsc.connect(testGain);
+                    testGain.connect(sharedAudioContext.destination);
+                    testOsc.frequency.value = 800;
+                    testGain.gain.setValueAtTime(0.1, sharedAudioContext.currentTime);
+                    testGain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.1);
+                    testOsc.start();
+                    testOsc.stop(sharedAudioContext.currentTime + 0.1);
+                    console.log('✅ Test beep played!');
+                }
+                // Resume if suspended (iOS requirement)
+                if (sharedAudioContext.state === 'suspended') {
+                    sharedAudioContext.resume();
+                }
+            } catch(e) {
+                console.log('❌ Audio unlock failed:', e);
+            }
+
+            // Now start the game
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
             gameOver.style.display = 'none';
@@ -432,31 +459,6 @@
             scoreElement.textContent = '0';
             livesElement.textContent = '3';
             plane.textContent = '✈️';
-
-            // UNLOCK AUDIO on iOS - create shared context during user interaction
-            try {
-                if (!sharedAudioContext) {
-                    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    console.log('✅ Audio context created!', sharedAudioContext.state);
-                }
-                // Resume if suspended (iOS requirement)
-                if (sharedAudioContext.state === 'suspended') {
-                    sharedAudioContext.resume().then(() => {
-                        console.log('✅ Audio context resumed!');
-                    });
-                }
-                // Play a nearly-silent tone to fully unlock
-                const unlockOsc = sharedAudioContext.createOscillator();
-                const unlockGain = sharedAudioContext.createGain();
-                unlockOsc.connect(unlockGain);
-                unlockGain.connect(sharedAudioContext.destination);
-                unlockGain.gain.setValueAtTime(0.001, sharedAudioContext.currentTime);
-                unlockOsc.start();
-                unlockOsc.stop(sharedAudioContext.currentTime + 0.01);
-                console.log('✅ Audio unlocked!');
-            } catch(e) {
-                console.log('❌ Audio unlock failed:', e);
-            }
 
             setInterval(() => { if (gameRunning) createObstacle(); }, 2000);
             setInterval(() => { if (gameRunning) createStar(); }, 1500);
