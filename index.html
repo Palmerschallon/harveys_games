@@ -24,9 +24,14 @@
 
         body {
             background: linear-gradient(to bottom, #0a1e3d 0%, #1a2f4d 40%, #0f1922 100%);
+            background-attachment: fixed;
             display: flex;
             justify-content: center;
             align-items: center;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
         }
 
         #startScreen {
@@ -317,47 +322,52 @@
         }
 
         function triggerFartTornado() {
-            // SUPER FART TORNADO POWER BOOST!
-            velocity = fartBoost * 2.5; // HUGE boost!
+            // SUPER FART TORNADO POWER BOOST - WILD AND RANDOM!
+            const randomBoost = 2 + Math.random() * 2; // Random 2x-4x boost!
+            velocity = fartBoost * randomBoost;
 
-            const tornado = document.createElement('div');
-            tornado.className = 'tornado';
-            tornado.textContent = '🌪️';
-            tornado.style.left = plane.offsetLeft + 'px';
-            tornado.style.top = planeY + 'px';
-            gameContainer.appendChild(tornado);
-            setTimeout(() => tornado.remove(), 2000);
+            // Create MULTIPLE spinning tornados for chaos!
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const tornado = document.createElement('div');
+                    tornado.className = 'tornado';
+                    tornado.textContent = '🌪️';
+                    tornado.style.left = (plane.offsetLeft + Math.random() * 100 - 50) + 'px';
+                    tornado.style.top = (planeY + Math.random() * 100 - 50) + 'px';
+                    tornado.style.fontSize = (50 + Math.random() * 80) + 'px'; // Random size!
+                    gameContainer.appendChild(tornado);
+                    setTimeout(() => tornado.remove(), 2000);
+                }, i * 100);
+            }
 
-            // Tornado sound (whoosh)
+            // LOUD tornado sound (whoosh)
             try {
                 if (sharedAudioContext) {
                     const osc = sharedAudioContext.createOscillator();
                     const gain = sharedAudioContext.createGain();
                     osc.connect(gain);
                     gain.connect(sharedAudioContext.destination);
-                    osc.frequency.setValueAtTime(200, sharedAudioContext.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, sharedAudioContext.currentTime + 0.4);
+                    osc.frequency.setValueAtTime(300, sharedAudioContext.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(80, sharedAudioContext.currentTime + 0.6);
                     osc.type = 'sawtooth';
-                    gain.gain.setValueAtTime(0.4, sharedAudioContext.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.5, sharedAudioContext.currentTime); // LOUDER!
+                    gain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.6);
                     osc.start();
-                    osc.stop(sharedAudioContext.currentTime + 0.4);
+                    osc.stop(sharedAudioContext.currentTime + 0.6);
                 }
             } catch(e) {}
 
-            // Announce it!
+            // Announce it LOUDLY!
             try {
                 if ('speechSynthesis' in window) {
                     speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance("FART TORNADO!");
-                    utterance.rate = 1.2;
+                    utterance.rate = 0.9; // Slower and clearer
                     utterance.volume = 1.0;
-                    utterance.pitch = 1.5; // High and exciting!
+                    utterance.pitch = 1.6; // Very high and exciting!
                     utterance.lang = 'en-US';
-                    setTimeout(() => {
-                        speechSynthesis.speak(utterance);
-                    }, 100);
-                    console.log('FART TORNADO!');
+                    speechSynthesis.speak(utterance); // No delay - speak immediately!
+                    console.log('🌪️ FART TORNADO! Boost:', randomBoost.toFixed(2) + 'x');
                 }
             } catch(e) {}
         }
