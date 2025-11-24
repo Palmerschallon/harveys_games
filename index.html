@@ -97,7 +97,7 @@
 
         #plane {
             position: absolute;
-            font-size: 60px;
+            font-size: min(12vw, 60px);
             left: 15%;
             z-index: 10;
             filter: drop-shadow(4px 4px 8px rgba(255, 150, 0, 0.6));
@@ -105,7 +105,7 @@
 
         .fart {
             position: absolute;
-            font-size: 50px;
+            font-size: min(10vw, 50px);
             animation: fartCloud 1.2s ease-out forwards;
             z-index: 5;
         }
@@ -118,14 +118,14 @@
         .obstacle {
             position: absolute;
             right: -100px;
-            font-size: 70px;
+            font-size: min(14vw, 70px);
             animation: moveObstacle linear;
         }
 
         .star {
             position: absolute;
             right: -50px;
-            font-size: 45px;
+            font-size: min(9vw, 45px);
             animation: moveStar linear;
         }
 
@@ -184,7 +184,7 @@
 
         .explosion {
             position: absolute;
-            font-size: 100px;
+            font-size: min(20vw, 100px);
             animation: explode 0.8s ease-out forwards;
             z-index: 50;
         }
@@ -196,7 +196,7 @@
 
         .pointPopup {
             position: absolute;
-            font-size: 40px;
+            font-size: min(8vw, 40px);
             font-weight: bold;
             color: #ffeb3b;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
@@ -211,7 +211,7 @@
 
         .tornado {
             position: absolute;
-            font-size: 80px;
+            font-size: min(16vw, 80px);
             animation: tornadoSpin 2s linear forwards;
             z-index: 55;
         }
@@ -268,6 +268,8 @@
         let obstacles = [];
         let stars = [];
         let totalFarts = 0;
+        let obstacleInterval;
+        let starInterval;
 
         // SHARED AUDIO CONTEXT for iOS compatibility
         let sharedAudioContext = null;
@@ -725,6 +727,18 @@
             // Audio should already be enabled from the sound button
             console.log('Starting game, audio state:', sharedAudioContext ? sharedAudioContext.state : 'no context');
 
+            // Clean up any existing intervals
+            if (gameLoop) clearInterval(gameLoop);
+            if (obstacleInterval) clearInterval(obstacleInterval);
+            if (starInterval) clearInterval(starInterval);
+            stopBackgroundMusic();
+
+            // Clear any remaining objects
+            obstacles.forEach(o => o.element.remove());
+            stars.forEach(s => s.element.remove());
+            obstacles = [];
+            stars = [];
+
             // Start the game
             startScreen.style.display = 'none';
             gameContainer.style.display = 'block';
@@ -739,8 +753,8 @@
             livesElement.textContent = '3';
             plane.textContent = '✈️';
 
-            setInterval(() => { if (gameRunning) createObstacle(); }, 2500);
-            setInterval(() => { if (gameRunning) createStar(); }, 1000);
+            obstacleInterval = setInterval(() => { if (gameRunning) createObstacle(); }, 2500);
+            starInterval = setInterval(() => { if (gameRunning) createStar(); }, 1000);
 
             gameLoop = setInterval(update, 1000 / 60);
 
