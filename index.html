@@ -91,6 +91,8 @@
             height: 100vh;
             overflow: hidden;
             touch-action: none;
+            background-color: #1a2f4d; /* Solid blue background */
+            background: linear-gradient(to bottom, #0a1e3d 0%, #1a2f4d 40%, #0f1922 100%);
         }
 
         #plane {
@@ -305,20 +307,21 @@
 
             // Play fart sound using SHARED audio context
             try {
-                if (!sharedAudioContext) {
-                    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (sharedAudioContext && sharedAudioContext.state === 'running') {
+                    const osc = sharedAudioContext.createOscillator();
+                    const gain = sharedAudioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(sharedAudioContext.destination);
+                    osc.frequency.setValueAtTime(120, sharedAudioContext.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(60, sharedAudioContext.currentTime + 0.2);
+                    osc.type = 'sawtooth';
+                    gain.gain.setValueAtTime(0.3, sharedAudioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(sharedAudioContext.currentTime + 0.2);
+                } else {
+                    console.log('⚠️ Audio context not ready for fart sound');
                 }
-                const osc = sharedAudioContext.createOscillator();
-                const gain = sharedAudioContext.createGain();
-                osc.connect(gain);
-                gain.connect(sharedAudioContext.destination);
-                osc.frequency.setValueAtTime(120, sharedAudioContext.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(60, sharedAudioContext.currentTime + 0.2);
-                osc.type = 'sawtooth';
-                gain.gain.setValueAtTime(0.3, sharedAudioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, sharedAudioContext.currentTime + 0.2);
-                osc.start();
-                osc.stop(sharedAudioContext.currentTime + 0.2);
             } catch(e) {
                 console.log('Fart sound failed:', e);
             }
@@ -725,8 +728,20 @@
 
             gameLoop = setInterval(update, 1000 / 60);
 
-            // Start background music!
-            setTimeout(() => startBackgroundMusic(), 200);
+            // Start background music AFTER ensuring audio context is running!
+            setTimeout(() => {
+                if (sharedAudioContext && sharedAudioContext.state === 'running') {
+                    startBackgroundMusic();
+                } else {
+                    console.log('⚠️ Audio context not running, trying to resume...');
+                    if (sharedAudioContext) {
+                        sharedAudioContext.resume().then(() => {
+                            console.log('✅ Resumed, starting music');
+                            startBackgroundMusic();
+                        });
+                    }
+                }
+            }, 500);
         }
 
         function restartGame() {
