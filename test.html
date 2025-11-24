@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harvey Test</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        #log {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            background: #f5576c;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            border-radius: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Harvey's Game - iOS Test</h1>
+    <div id="log">Loading...</div>
+    <button onclick="testAudio()">TEST SOUND</button>
+    <button onclick="testGradient()">TEST GRADIENT</button>
+
+    <script>
+        const log = document.getElementById('log');
+
+        function addLog(msg) {
+            log.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        // Initial diagnostics
+        addLog('=== BROWSER INFO ===');
+        addLog('User Agent: ' + navigator.userAgent);
+        addLog('Platform: ' + navigator.platform);
+        addLog('Screen: ' + screen.width + 'x' + screen.height);
+        addLog('Window: ' + window.innerWidth + 'x' + window.innerHeight);
+        addLog('');
+
+        addLog('=== FEATURE DETECTION ===');
+        addLog('AudioContext: ' + (typeof AudioContext !== 'undefined' ? 'YES' : 'NO'));
+        addLog('webkitAudioContext: ' + (typeof webkitAudioContext !== 'undefined' ? 'YES' : 'NO'));
+        addLog('localStorage: ' + (typeof localStorage !== 'undefined' ? 'YES' : 'NO'));
+        addLog('');
+
+        addLog('=== CSS GRADIENT TEST ===');
+        const bgColor = window.getComputedStyle(document.body).background;
+        addLog('Background computed: ' + bgColor.substring(0, 100));
+        addLog('');
+
+        addLog('Ready! Tap TEST SOUND to check audio.');
+
+        function testAudio() {
+            addLog('\n=== AUDIO TEST ===');
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) {
+                    addLog('ERROR: No AudioContext available!');
+                    return;
+                }
+
+                const ctx = new AudioContextClass();
+                addLog('AudioContext created!');
+                addLog('State: ' + ctx.state);
+
+                if (ctx.state === 'suspended') {
+                    addLog('Resuming...');
+                    ctx.resume().then(() => {
+                        addLog('Resumed! State: ' + ctx.state);
+                        playTone(ctx);
+                    });
+                } else {
+                    playTone(ctx);
+                }
+            } catch(e) {
+                addLog('ERROR: ' + e.message);
+            }
+        }
+
+        function playTone(ctx) {
+            addLog('Playing tone...');
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 440;
+            gain.gain.value = 0.3;
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+            addLog('Tone played! Did you hear it?');
+        }
+
+        function testGradient() {
+            addLog('\n=== GRADIENT TEST ===');
+            document.body.style.background = 'linear-gradient(to right, red, blue)';
+            addLog('Changed gradient to red->blue. See it?');
+            setTimeout(() => {
+                document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                addLog('Changed back to purple gradient.');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
